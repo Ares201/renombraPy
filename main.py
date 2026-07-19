@@ -6,7 +6,7 @@ import zipfile
 import tempfile
 import shutil
 from pathlib import Path
-from renombrar import renombrar_pdfs
+from nombraPv import renombrar_pdfs
 
 app = FastAPI(title="Renombrador de PDFs")
 
