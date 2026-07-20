@@ -12,7 +12,7 @@ app = FastAPI(title="Renombrador de PDFs")
 # 🔥 Configuración CORS específica para tu frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://kanayseche.web.app"],  # Tu dominio en producción
+    allow_origins=["https://kanaybd.web.app"],
     allow_credentials=False,
     allow_methods=["POST", "OPTIONS"],  # Solo POST y OPTIONS
     allow_headers=["*"],
