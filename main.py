@@ -1,14 +1,23 @@
-# main.py
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 import io
 import zipfile
 import tempfile
-import shutil
 from pathlib import Path
 from nombraPv import renombrar_pdfs
 
 app = FastAPI(title="Renombrador de PDFs")
+
+# 🔥 Configuración CORS específica para tu frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://kanayseche.web.app"],  # Tu dominio en producción
+    allow_credentials=False,
+    allow_methods=["POST", "OPTIONS"],  # Solo POST y OPTIONS
+    allow_headers=["*"],
+    expose_headers=["X-Renombrados", "X-Omitidos"],  # Para leer los headers personalizados
+)
 
 @app.post("/renombrar")
 async def renombrar_archivos(files: list[UploadFile] = File(...)):
@@ -42,7 +51,7 @@ async def renombrar_archivos(files: list[UploadFile] = File(...)):
             media_type="application/zip",
             headers={
                 "Content-Disposition": "attachment; filename=renombrados.zip",
-                "X-Renombrados": str(resultado["renombrados"]),
-                "X-Omitidos": str(resultado["omitidos"])
+                "X-Renombrados": str(resultado.get("renombrados", 0)),
+                "X-Omitidos": str(resultado.get("omitidos", 0))
             }
         )
