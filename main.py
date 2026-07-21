@@ -29,11 +29,11 @@ def renombrar_archivos(files: list[UploadFile] = File(...)):
     # Crear carpeta temporal
     with tempfile.TemporaryDirectory() as tmpdir:
         temp_dir = Path(tmpdir)
-        # Guardar archivos subidos (CORREGIDO: Quitamos el await porque ahora es una función síncrona)
+        # Guardar archivos subidos usando file.file.read() para modo síncrono
         for file in files:
             file_path = temp_dir / file.filename
             with open(file_path, "wb") as f:
-                content = file.read()
+                content = file.file.read()
                 f.write(content)
 
         # Ejecutar renombrado
