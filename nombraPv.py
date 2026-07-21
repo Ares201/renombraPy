@@ -10,12 +10,12 @@ import logging
 # En Render, el Dockerfile lo instalará, así que no hace falta setear la ruta.
 # Si falla, puedes forzarlo: pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
 
-# def preprocesar_imagen(imagen):
-#     if imagen.mode != "L":
-#         imagen = imagen.convert("L")
-#     enhancer = ImageEnhance.Contrast(imagen)
-#     imagen = enhancer.enhance(2.0)
-#     return imagen
+def preprocesar_imagen(imagen):
+    if imagen.mode != "L":
+        imagen = imagen.convert("L")
+    enhancer = ImageEnhance.Contrast(imagen)
+    imagen = enhancer.enhance(2.0)
+    return imagen
 
 def extraer_datos(texto):
     fecha_match = re.search(r"\b(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})\b", texto)
@@ -124,10 +124,9 @@ def renombrar_pdfs(carpeta_path: str) -> dict:
             # CORRECCIÓN: Eliminamos el bucle de 4 ángulos por defecto.
             # Evaluamos solo la posición normal (ángulo 0). 
             # Si el documento siempre viene derecho, con esto basta y sobra.
-            # img_proc = preprocesar_imagen(pagina)
+            img_proc = preprocesar_imagen(pagina)
             texto = pytesseract.image_to_string(
-                # img_proc,
-                pagina,
+                img_proc,
                 config="--psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/:.- "
             )
             fecha, orden = extraer_datos(texto)
@@ -142,8 +141,7 @@ def renombrar_pdfs(carpeta_path: str) -> dict:
                 ruta.rename(carpeta / nuevo_nombre)
                 renombrados += 1
             else:
-                while (carpeta / f"otro_{contador_otro}.pdf").exists():
-                    contador_otro += 1
+        contador_otro += 1
                 ruta.rename(carpeta / f"otro_{contador_otro}.pdf")
                 omitidos += 1
                 contador_otro += 1
