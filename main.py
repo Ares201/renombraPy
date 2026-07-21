@@ -20,7 +20,7 @@ app.add_middleware(
 )
 
 @app.post("/renombrar")
-async def renombrar_archivos(files: list[UploadFile] = File(...)):
+def renombrar_archivos(files: list[UploadFile] = File(...)):
     # Validar que sean PDFs
     for file in files:
         if not file.filename.lower().endswith('.pdf'):
@@ -33,7 +33,7 @@ async def renombrar_archivos(files: list[UploadFile] = File(...)):
         for file in files:
             file_path = temp_dir / file.filename
             with open(file_path, "wb") as f:
-                content = await file.read()
+                content = file.read()
                 f.write(content)
 
         # Ejecutar renombrado
