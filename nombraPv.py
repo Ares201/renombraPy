@@ -36,6 +36,67 @@ def ya_procesado(nombre):
     return bool(re.match(r"^\d{4}-\d{2}-\d{2}-PV\d+\.pdf$", nombre, re.IGNORECASE)) or \
            bool(re.match(r"^otro_\d+\.pdf$", nombre, re.IGNORECASE))
 
+# def renombrar_pdfs(carpeta_path: str) -> dict:
+#     carpeta = Path(carpeta_path)
+#     if not carpeta.is_dir():
+#         return {"error": "Carpeta no existe"}
+
+#     renombrados = 0
+#     omitidos = 0
+#     contador_otro = 1
+#     errores = []
+
+#     for ruta in carpeta.glob("*.pdf"):
+#         if ya_procesado(ruta.name):
+#             continue
+#         try:
+#             # Solo primera página
+#             pagina = convert_from_path(
+#                 str(ruta),
+#                 first_page=1,
+#                 last_page=1,
+#                 dpi=300
+#             )[0]
+
+#             fecha = orden = None
+#             for angulo in (0, 90, 180, 270):
+#                 img = pagina.rotate(angulo, expand=True) if angulo else pagina
+#                 img_proc = preprocesar_imagen(img)
+#                 texto = pytesseract.image_to_string(
+#                     img_proc,
+#                     config="--psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/:.- "
+#                 )
+#                 fecha, orden = extraer_datos(texto)
+#                 if fecha and orden:
+#                     break
+
+#             if fecha and orden:
+#                 nuevo_nombre = f"{fecha}-{orden}.pdf"
+#                 # Evitar colisiones (añadir _1, _2...)
+#                 base = nuevo_nombre.replace(".pdf", "")
+#                 contador = 1
+#                 while (carpeta / nuevo_nombre).exists():
+#                     nuevo_nombre = f"{base}_{contador}.pdf"
+#                     contador += 1
+#                 ruta.rename(carpeta / nuevo_nombre)
+#                 renombrados += 1
+#             else:
+#                 # Sin datos: otro_#
+#                 while (carpeta / f"otro_{contador_otro}.pdf").exists():
+#                     contador_otro += 1
+#                 ruta.rename(carpeta / f"otro_{contador_otro}.pdf")
+#                 omitidos += 1
+#                 contador_otro += 1
+#         except Exception as e:
+#             errores.append(f"{ruta.name}: {str(e)}")
+#             omitidos += 1
+
+    # return {
+    #     "renombrados": renombrados,
+    #     "omitidos": omitidos,
+    #     "errores": errores
+    # }
+
 def renombrar_pdfs(carpeta_path: str) -> dict:
     carpeta = Path(carpeta_path)
     if not carpeta.is_dir():
@@ -50,29 +111,28 @@ def renombrar_pdfs(carpeta_path: str) -> dict:
         if ya_procesado(ruta.name):
             continue
         try:
-            # Solo primera página
+            # CORRECCIÓN: Bajamos a 150 DPI para agilizar drásticamente el OCR
             pagina = convert_from_path(
                 str(ruta),
                 first_page=1,
                 last_page=1,
-                dpi=300
+                dpi=150
             )[0]
 
             fecha = orden = None
-            for angulo in (0, 90, 180, 270):
-                img = pagina.rotate(angulo, expand=True) if angulo else pagina
-                img_proc = preprocesar_imagen(img)
-                texto = pytesseract.image_to_string(
-                    img_proc,
-                    config="--psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/:.- "
-                )
-                fecha, orden = extraer_datos(texto)
-                if fecha and orden:
-                    break
+            
+            # CORRECCIÓN: Eliminamos el bucle de 4 ángulos por defecto.
+            # Evaluamos solo la posición normal (ángulo 0). 
+            # Si el documento siempre viene derecho, con esto basta y sobra.
+            img_proc = preprocesar_imagen(pagina)
+            texto = pytesseract.image_to_string(
+                img_proc,
+                config="--psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/:.- "
+            )
+            fecha, orden = extraer_datos(texto)
 
             if fecha and orden:
                 nuevo_nombre = f"{fecha}-{orden}.pdf"
-                # Evitar colisiones (añadir _1, _2...)
                 base = nuevo_nombre.replace(".pdf", "")
                 contador = 1
                 while (carpeta / nuevo_nombre).exists():
@@ -81,7 +141,6 @@ def renombrar_pdfs(carpeta_path: str) -> dict:
                 ruta.rename(carpeta / nuevo_nombre)
                 renombrados += 1
             else:
-                # Sin datos: otro_#
                 while (carpeta / f"otro_{contador_otro}.pdf").exists():
                     contador_otro += 1
                 ruta.rename(carpeta / f"otro_{contador_otro}.pdf")
